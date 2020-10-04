@@ -18,4 +18,4 @@ Everything here is strictly educational. I wanted to learn and practice.
 | Hover mouse | Aim |
 
 # License
-See [License](/License).
+See [License](LICENSE).
