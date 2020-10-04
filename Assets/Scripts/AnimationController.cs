@@ -1,53 +1,78 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor.Animations;
 
 public class AnimationController : MonoBehaviour
 {
-    public AnimatorController controller;
-    public GameObject player;
-    private PlayerController playerController;
-    private ChildMotion[] motionArray;
+    [Header("References")]
+    [SerializeField] private GameObject _player;
+    [SerializeField] private PlayerController _playerController;
+    [SerializeField] private Animator _animator;
+    [SerializeField] private AnimatorController _controller;
+    private ChildMotion[] _motionArray;
 
     private void Start()
     {
-        playerController = player.GetComponent<PlayerController>();
-        motionArray = ((BlendTree)controller.layers[0].stateMachine.defaultState.motion).children; 
-        for (int i = 0; i < motionArray.Length; i++)
+        _motionArray = GetMotionArrayCopy();
+        ModifyMotionArrayCopy();
+        SetMotionArray(_motionArray);
+    }
+
+    private void Update()
+    {
+        SetVelocityPropertyInAnimator();
+    }
+    
+    private ChildMotion[] GetMotionArrayCopy()
+    {
+        // This returns all the animations in our Animator Controller's blend tree.
+        return ((BlendTree)_controller.layers[0].stateMachine.defaultState.motion).children;
+    }
+    private void ModifyMotionArrayCopy()
+    {
+        /* Here we modify all the parameters of the animations in the blend tree
+        * to the values of the maximum velocity set by us in PlayerController
+        * just so we have to modify the maximum velocity in only one place.
+        * */
+        for(int i = 0; i < _motionArray.Length; i++)
         {
-            switch (motionArray[i].motion.name)
+            switch(_motionArray[i].motion.name)
             {
                 case "Idle":
-                    motionArray[i].position = Vector2.zero;
+                    _motionArray[i].position = Vector2.zero;
                     break;
                 case "Walking":
-                    motionArray[i].position = new Vector2(0f, playerController.maxWalkingVelocity);
+                    _motionArray[i].position = new Vector2(0f, _playerController.MaxWalkingVelocity);
                     break;
                 case "Running":
-                    motionArray[i].position = new Vector2(0f, playerController.maxRunningVelocity);
+                    _motionArray[i].position = new Vector2(0f, _playerController.MaxRunningVelocity);
                     break;
                 case "Walking Backwards":
-                    motionArray[i].position = new Vector2(0f, -playerController.maxWalkingVelocity);
+                    _motionArray[i].position = new Vector2(0f, -_playerController.MaxWalkingVelocity);
                     break;
                 case "Left Strafe Walking":
-                    motionArray[i].position = new Vector2(-playerController.maxWalkingVelocity, 0f);
+                    _motionArray[i].position = new Vector2(-_playerController.MaxWalkingVelocity, 0f);
                     break;
                 case "Right Strafe Walking":
-                    motionArray[i].position = new Vector2(playerController.maxWalkingVelocity, 0f);
+                    _motionArray[i].position = new Vector2(_playerController.MaxWalkingVelocity, 0f);
                     break;
                 case "Left Strafe":
-                    motionArray[i].position = new Vector2(-playerController.maxRunningVelocity, 0f);
+                    _motionArray[i].position = new Vector2(-_playerController.MaxRunningVelocity, 0f);
                     break;
                 case "Right Strafe":
-                    motionArray[i].position = new Vector2(playerController.maxRunningVelocity, 0f);
+                    _motionArray[i].position = new Vector2(_playerController.MaxRunningVelocity, 0f);
                     break;
             }
         }
-        ((BlendTree)controller.layers[0].stateMachine.defaultState.motion).children = motionArray;
     }
-    private void Update()
+    private void SetMotionArray( ChildMotion[] motionArray )
     {
-        
+        ((BlendTree)_controller.layers[0].stateMachine.defaultState.motion).children = motionArray;
+    }
+
+    private void SetVelocityPropertyInAnimator()
+    {
+        // This is how we update the Velocity parameter inside our animator.
+        _animator.SetFloat("VelocityX", _playerController.VelocityX);
+        _animator.SetFloat("VelocityZ", _playerController.VelocityZ);
     }
 }
