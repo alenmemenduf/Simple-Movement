@@ -1,6 +1,7 @@
 # Simple-Movement
 A simple Unity3D scene I made to learn about animation, camera, control, movement and shaders.
 
+![A demo of the game mechanic](https://media.giphy.com/media/QCRR3Bh4e7aB5VXUz6/giphy.gif)
 ## The goal
 Everything here is strictly educational. I wanted to learn and practice.
 
