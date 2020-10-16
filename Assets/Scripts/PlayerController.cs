@@ -1,12 +1,7 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Camera settings")]
-        [SerializeField] private float _switchShoulderDuration = 0.5f;
-        [SerializeField] private GameObject _cameraPivot;
-        [SerializeField] private Vector3 _pivotOffsetFromPlayer = new Vector3(0.3f, 1.8f, 0.0f);
-
     [Header("Player speed")]
         [SerializeField] private float _acceleration = 100f;
         [SerializeField] private float _maxWalkingVelocity = 4f;
@@ -18,7 +13,6 @@ public class PlayerController : MonoBehaviour
         [SerializeField] private float _horizontalMouseSensitivity = 1f;
         [SerializeField] private float _verticalMouseSensitivity = 1f;
 
-
         public float VelocityX { get; private set; } = 0f;
         public float VelocityZ { get; private set; } = 0f;
         public float MaxWalkingVelocity { get => _maxWalkingVelocity; private set => _maxWalkingVelocity = value; }
@@ -29,49 +23,31 @@ public class PlayerController : MonoBehaviour
         private Rigidbody _rigidbody;
         private Camera _camera;
         private Vector2 _playerMoveDirection = Vector2.zero;
-        private float _maxVelocity;
+        private ThirdPersonMovement _thirdPersonMovement;
+        private IPlayerLook _playerLook;
+        private float _currentMaxVelocity;
         private bool _isRunning = false;
-        private Vector3 _switchShoulderVelocity;
-        private bool _isCameraOverRightShoulder = true;
 
-    private void Awake()
+        private void Start()
     {
         _rigidbody = GetComponent<Rigidbody>();
         _camera = Camera.main;
+        _playerLook = new LikeCameraLook(this);
+        _thirdPersonMovement = new ThirdPersonMovement(this);
     }
 
     private void Update()
     {
-        HandleInputs();
-        _cameraPivot.transform.localPosition = Vector3.SmoothDamp(_cameraPivot.transform.localPosition, new Vector3(_pivotOffsetFromPlayer.x * (_isCameraOverRightShoulder ? 1f : -1f), _cameraPivot.transform.localPosition.y, _cameraPivot.transform.localPosition.z), ref _switchShoulderVelocity, _switchShoulderDuration);
-        transform.LookAt(transform.position + new Vector3(_camera.transform.forward.x, 0f, _camera.transform.forward.z), Vector3.up);
+        _playerLook.SetPlayerFaceDirection(_camera.transform.forward);
     }
-
-    
 
     private void FixedUpdate()
     {
-        SwitchBetweenWalkAndRun();
+        _thirdPersonMovement.SetIsRunning(ref _isRunning,ref _currentMaxVelocity);
+        _thirdPersonMovement.SetMovementDirection(ref _playerMoveDirection);
         ChangeVelocity();
-        CapVelocity();
-        _rigidbody.velocity = Vector3.ClampMagnitude(transform.right * VelocityX + transform.forward * VelocityZ, _maxVelocity) + _rigidbody.velocity.y * Vector3.up;
     }
 
-    private void SwitchBetweenWalkAndRun()
-    {
-        if(_isRunning && VelocityZ >= -0.2f)
-            _maxVelocity = MaxRunningVelocity;
-        else
-            _maxVelocity = MaxWalkingVelocity;
-    }
-
-    private void HandleInputs()
-    {
-        _isRunning = Input.GetKey(KeyCode.LeftShift);
-        _playerMoveDirection = (Input.GetAxis("Horizontal") * Vector2.right + Input.GetAxis("Vertical") * Vector2.up).normalized;
-        if(Input.GetKeyDown(KeyCode.Q))
-            _isCameraOverRightShoulder = _isCameraOverRightShoulder ? false : true;
-    }
     private void ChangeVelocity()
     {
         if(_playerMoveDirection.x != 0)
@@ -83,6 +59,9 @@ public class PlayerController : MonoBehaviour
         }
         VelocityX *= _friction;
         VelocityZ *= _friction;
+        
+        CapVelocity();
+        _rigidbody.velocity = Vector3.ClampMagnitude(transform.right * VelocityX + transform.forward * VelocityZ, _currentMaxVelocity) + _rigidbody.velocity.y * Vector3.up;
     }
 
     // function to cap the velocity inside the boundaries
@@ -92,10 +71,10 @@ public class PlayerController : MonoBehaviour
             VelocityX = 0f;
         if(Mathf.Abs(VelocityZ) < _idleThreshold)
             VelocityZ = 0f;
-        if(Mathf.Abs(VelocityX) > _maxVelocity)
-            VelocityX = Mathf.Sign(VelocityX) * _maxVelocity;
-        if(Mathf.Abs(VelocityZ) > _maxVelocity)
-            VelocityZ = Mathf.Sign(VelocityZ) * _maxVelocity;
+        if(Mathf.Abs(VelocityX) > _currentMaxVelocity)
+            VelocityX = Mathf.Sign(VelocityX) * _currentMaxVelocity;
+        if(Mathf.Abs(VelocityZ) > _currentMaxVelocity)
+            VelocityZ = Mathf.Sign(VelocityZ) * _currentMaxVelocity;
     } 
-
+    
 }

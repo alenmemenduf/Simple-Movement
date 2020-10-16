@@ -7,7 +7,9 @@ public class CameraController : MonoBehaviour
     [Header("Camera follow settings")]
         [SerializeField] private PlayerController _player;
         [SerializeField] private Camera _camera;
-        [SerializeField] private GameObject _cameraFollowObj;
+        [SerializeField] private GameObject _cameraPivot;
+        [SerializeField] private Vector3 _pivotOffsetFromPlayer = new Vector3(0.3f, 1.8f, 0.0f);
+        [SerializeField] private float _switchShoulderDuration = 0.5f;
         [SerializeField] private float _cameraMoveSpeed = 120.0f;
 
     [Header("Aim down sights settings")]
@@ -23,7 +25,8 @@ public class CameraController : MonoBehaviour
         private float _maxAngleY = 80f;
         private bool _isAiming = false;
         private float _cameraZoomVelocity;
-
+        private Vector3 _switchShoulderVelocity;
+        private bool _isCameraOverRightShoulder = true;
     private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
@@ -36,6 +39,8 @@ public class CameraController : MonoBehaviour
 
     private void Update()
     {
+        if(Input.GetKeyDown(KeyCode.Q))
+            _isCameraOverRightShoulder = !_isCameraOverRightShoulder;
         _mouseX = Input.GetAxis("Mouse X");
         _mouseY = Input.GetAxis("Mouse Y");
         _isAiming = Input.GetMouseButton(1);
@@ -47,12 +52,14 @@ public class CameraController : MonoBehaviour
         Quaternion localRotation = Quaternion.Euler(_rotationOnYAxis, _rotationOnXAxis, 0.0f);
         transform.rotation = localRotation;
         
+        _cameraPivot.transform.localPosition = Vector3.SmoothDamp(_cameraPivot.transform.localPosition, new Vector3(_pivotOffsetFromPlayer.x * (_isCameraOverRightShoulder ? 1f : -1f), _cameraPivot.transform.localPosition.y, _cameraPivot.transform.localPosition.z), ref _switchShoulderVelocity, _switchShoulderDuration);
+
         UpdateAimDownSights();
     }
 
     private void LateUpdate()
     {
-        Transform target = _cameraFollowObj.transform;
+        Transform target = _cameraPivot.transform;
         float step = _cameraMoveSpeed * Time.deltaTime;
         transform.position = Vector3.MoveTowards(transform.position, target.position, step);
     }

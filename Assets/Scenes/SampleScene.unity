@@ -576,6 +576,10 @@ PrefabInstance:
       propertyPath: _player
       value: 
       objectReference: {fileID: 9129815865866882659}
+    - target: {fileID: 502666713657710961, guid: 8b90f86edc381f04ab315ce6aeb6d20f, type: 3}
+      propertyPath: _cameraPivot
+      value: 
+      objectReference: {fileID: 625517890}
     - target: {fileID: 502666713657710963, guid: 8b90f86edc381f04ab315ce6aeb6d20f, type: 3}
       propertyPath: m_Name
       value: Camera Base
